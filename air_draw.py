@@ -1,11 +1,16 @@
+"""
+Air-Draw
+Drawing in the air with Python and OpenCV!
+"""
+
 import cv2
 import numpy as np
 
-frameWidth = 800 #640
-frameHeight = 600 #480
+FRAME_WIDTH = 800 #640
+FRAME_HEIGHT = 600 #480
 cap = cv2.VideoCapture(0)
-cap.set(3, frameWidth)
-cap.set(4, frameHeight)
+cap.set(3, FRAME_WIDTH)
+cap.set(4, FRAME_HEIGHT)
 cap.set(10, 150)
 
 # myColors = [[5, 107, 0, 19, 255, 255],
@@ -37,25 +42,36 @@ myColorValues = [[0, 0, 255],
 myPoints = []  ## []x , y , colorId ]
 
 
-def findColor(img, myColors, myColorValues):
-    imgHSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    newPoints = []
-    for id, color in enumerate(myColors):
+def find_color(img, my_colors):
+    """
+    Function finds pixels with color from my_colors on image img.
+    :param img: image to check for pixels.
+    :param my_colors: list of colors for pixels to find.
+    :return: list of found pixels.
+    """
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    new_points = []
+    for color_id, color in enumerate(my_colors):
         lower = np.array(color[0:3])
         upper = np.array(color[3:6])
-        mask = cv2.inRange(imgHSV, lower, upper)
+        mask = cv2.inRange(img_hsv, lower, upper)
 
-        x, y = getContours(mask)
+        x, y = get_contours(mask)
         if x != 0 and y != 0:
-            print(id)
-            newPoints.append([x, y, id])
-            # cv2.circle(imgResult, (x, y), 15, myColorValues[id], cv2.FILLED)
+            print(color_id)
+            new_points.append([x, y, color_id])
+            # cv2.circle(imgResult, (x, y), 15, my_color_values[id], cv2.FILLED)
             cv2.circle(imgResult, (x, y), 15, [255, 255, 255], cv2.FILLED)
             # cv2.imshow(str(color[0]), mask)
-    return newPoints
+    return new_points
 
 
-def getContours(img):
+def get_contours(img):
+    """
+    Function gets contours for pixels.
+    :param img: Image to analyse.
+    :return: None
+    """
     contours, hierarchy = cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
     x, y, w, h = 0, 0, 0, 0
     for cnt in contours:
@@ -68,22 +84,27 @@ def getContours(img):
     return x + w // 2, y
 
 
-def drawOnCanvas(myPoints, myColorValues):
-    for point in myPoints:
-        cv2.circle(imgResult, (point[0], point[1]), 10, myColorValues[point[2]], cv2.FILLED)
+def draw_on_canvas(canvas, my_points, my_color_values):
+    """
+    Function draws circles on given canvas.
+    :param canvas: Canvas to draw on.
+    :param my_points: Points to draw.
+    :param my_color_values: Colors for points to draw.
+    :return: None
+    """
+    for point in my_points:
+        cv2.circle(canvas, (point[0], point[1]), 10, my_color_values[point[2]], cv2.FILLED)
 
 
 while True:
-    success, img = cap.read()
-    imgResult = img.copy()
-    # img_raw = img.copy()
-    # imgResult = cv2.flip(img_raw, flipCode=1)
-    newPoints = findColor(img, myColors, myColorValues)
+    success, image = cap.read()
+    imgResult = image.copy()
+    newPoints = find_color(image, myColors)
     if len(newPoints) != 0:
         for newP in newPoints:
             myPoints.append(newP)
     if len(myPoints) != 0:
-        drawOnCanvas(myPoints, myColorValues)
+        draw_on_canvas(imgResult, myPoints, myColorValues)
 
     cv2.imshow("Result", cv2.flip(imgResult, flipCode=1))
     if cv2.waitKey(1) & 0xFF == ord('q'):
